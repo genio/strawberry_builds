@@ -160,10 +160,37 @@ if (!(Test-Path Z:\sw\wix311)) {
 Write-Host("We have a Z:\wix311 folder");
 Write-Host("");
 
-# Ensure we have a mingw64bit.830 folder
-if (!(Test-Path "Z:\mingw64bit.830")) {
-    Write-Host("Creating a folder, Z:\mingw64bit.830");
-    New-Item -ItemType Directory -Force -Path "Z:\mingw64bit.830"
+# Ensure we have a working Perl
+if (!(Test-Path "Z:\perl")) {
+    [String]$url = "https://strawberryperl.com/download/5.32.1.1/strawberry-perl-5.32.1.1-64bit-portable.zip";
+    [String]$file = "Z:\_zips\strawberry-perl-5.32.1.1-64bit-portable.zip";
+    [String]$checksum = "692646105b0f5e058198a852dc52a48f1cebcaf676d63bbdeae12f4eaee9bf5c";
+    if (![System.IO.File]::Exists($file)) {
+        Write-Host("Downloading $($url).");
+        DownloadFile -url $url -output $file -checksum $checksum;
+    }
+    Write-Host("Creating a folder, Z:\perl");
+    New-Item -ItemType Directory -Force -Path "Z:\perl"
+    ExtractArchive -archive_path $file -out_dir "Z:\perl" -no_tar $True;
 }
-Write-Host("We have a Z:\mingw64bit.830 folder");
+Write-Host("We have Perl. Now we're setting it up");
+if (Test-Path 'env:TERM') { Remove-Item env:\TERM }
+if (Test-Path 'env:PERL_JSON_BACKEND') { Remove-Item env:\PERL_JSON_BACKEND }
+if (Test-Path 'env:PERL_YAML_BACKEND') { Remove-Item env:\PERL_YAML_BACKEND }
+if (Test-Path 'env:PERL5LIB') { Remove-Item env:\PERL5LIB }
+if (Test-Path 'env:PERL5OPT') { Remove-Item env:\PERL5OPT }
+if (Test-Path 'env:PERL_MM_OPT') { Remove-Item env:\PERL_MM_OPT }
+if (Test-Path 'env:PERL_MB_OPT') { Remove-Item env:\PERL_MB_OPT }
+if (Test-Path 'env:PERL_LOCAL_LIB_ROOT') { Remove-Item env:\PERL_LOCAL_LIB_ROOT }
+# Go through the PATH and remove Perl-related items
+$good_array = @();
+$array = $env:Path.split(";", [System.StringSplitOptions]::RemoveEmptyEntries) | Select-Object -uniq
+Foreach ($item in $array) {
+    if (-not $item.StartsWith("Z:\")) {
+        $good_array += ,$item;
+    }
+}
+$env:Path = $good_array -join ';'
+$env:PATH = "Z:\perl\perl\site\bin;Z:\perl\perl\bin;Z:\perl\c\bin;$($env:PATH)";
+$env:PATH = "Z:\sw\wix311;$($env:PATH)";
 Write-Host("");
