@@ -92,8 +92,8 @@ if (!(Test-Path Z:\sw\cmake)) {
         Write-Host("Downloading $($url). This may take some time as it's 15.8MB.");
         DownloadFile -url $url -output $file -checksum $checksum;
     }
-    # this one's weird, so we can't use tar on it
-    ExtractArchive -archive_path $zip_file -out_dir "Z:\_zips\cmake" -no_tar $True;
+    # extract to a temporary location before moving into place
+    ExtractArchive -archive_path $file -out_dir "Z:\_zips\cmake"
 
     Move-Item "Z:\_zips\cmake\cmake-3.20.5" "Z:\sw\cmake";
     Remove-Item Z:\_zips\cmake -Recurse -Force;
